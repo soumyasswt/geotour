@@ -1,0 +1,5 @@
+{
+  "name": "GeoTour Multi-City Optimizer",
+  "description": "Visualize shortest path algorithms and optimize multi-city tours on an interactive map.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #0a0a0a;
+}
+
+.leaflet-container {
+  background: #0a0a0a !important;
+}
+
+.leaflet-tooltip {
+  background-color: #121212 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-family: "Inter", sans-serif !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-tooltip::before {
+  border-top-color: #121212 !important;
+}
+
+.glowing-path {
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.8));
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.glowing-blue-path {
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8));
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.8));
+  }
+  50% {
+    opacity: .7;
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
+  }
+}
