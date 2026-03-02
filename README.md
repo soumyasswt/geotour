@@ -1,4 +1,4 @@
-# GeoTour: Advanced Pathfinding Visualizer
+# GeoTour: Vector Path
 
 GeoTour is a sophisticated web application for visualizing complex pathfinding and graph traversal algorithms on an interactive map. Built with React, TypeScript, and Leaflet, it provides a powerful tool for developers, students, and enthusiasts to understand and experiment with classic algorithms in a real-world context.
 

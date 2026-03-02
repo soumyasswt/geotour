@@ -71,6 +71,22 @@ export default function App() {
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
 
   useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error("Error getting user location:", error);
+        }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
     if (nodes.length > 2) {
       if (['A*', 'Dijkstra', 'BFS', 'DFS'].includes(algorithm)) {
         setAlgorithm('Ordered (A*)');
@@ -131,7 +147,7 @@ export default function App() {
     return () => {
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
-  }, [searchQuery]);
+  }, [searchQuery, userLocation]); // Re-fetch suggestions when user location becomes available
 
   const handleAddCityFromSearch = (suggestion: SearchSuggestion) => {
     const lat = parseFloat(suggestion.lat);
