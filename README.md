@@ -1,5 +1,7 @@
 # GeoTour: Vector Path
 
+[Live Website](https://geotour.soumyas.tech/)
+
 GeoTour is a sophisticated web application for visualizing complex pathfinding and graph traversal algorithms on an interactive map. Built with React, TypeScript, and Leaflet, it provides a powerful tool for developers, students, and enthusiasts to understand and experiment with classic algorithms in a real-world context.
 
 Users can dynamically build a network of locations (nodes), fetch actual road routing data to form connections (edges), and then apply a suite of algorithms to find optimal paths or tours. The application visualizes the entire process, including the final route, all explored nodes, and key performance statistics, offering deep insights into how each algorithm operates under real-world conditions.
@@ -53,6 +55,10 @@ GeoTour showcases a variety of algorithms, each with detailed explanations of th
 - **Visit in Order (A*):** This algorithm calculates the path required to visit a series of pre-defined waypoints in a specific, user-defined order. It does this by running A* search sequentially between each waypoint in the list.
 - **Optimize Order (TSP):** This feature tackles the Traveling Salesperson Problem (TSP). Given a set of nodes, it finds an approximation of the shortest possible tour that visits every node exactly once before returning to the start. Since TSP is NP-hard, this implementation uses a **Nearest Neighbor heuristic** combined with 2-opt refinements to find a high-quality approximate solution efficiently.
 
+### Current Works
+- When you have more than two locations, it will automatically compare the "Visit in Order" and "Optimize Order (TSP)" algorithms and select the one that produces a shorter route.
+- The chosen algorithm will be displayed in the results panel.
+
 ## 🛠️ Tech Stack
 
 - **Core Framework:** React (with Vite), TypeScript
@@ -101,7 +107,7 @@ of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+furnished to do so, to a subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
