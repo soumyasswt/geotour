@@ -1,6 +1,6 @@
 # GeoTour: Vector Path
 
-[Live Website](https://geotour.soumyas.tech/)
+[Live Website](https://geotour-27988253-7f9ab.web.app/)
 
 GeoTour is a sophisticated web application for visualizing complex pathfinding and graph traversal algorithms on an interactive map. Built with React, TypeScript, and Leaflet, it provides a powerful tool for developers, students, and enthusiasts to understand and experiment with classic algorithms in a real-world context.
 
@@ -17,7 +17,7 @@ Users can dynamically build a network of locations (nodes), fetch actual road ro
 
 ## Core Logic & Architecture
 
-The application's core is a custom-built graph data structure and a suite of pathfinding algorithms implemented in TypeScript. The architecture is designed to be modular and extensible.
+The application\'s core is a custom-built graph data structure and a suite of pathfinding algorithms implemented in TypeScript. The architecture is designed to be modular and extensible.
 
 ### Graph Representation
 - **Nodes:** Each location on the map is a `Node` object, containing an `id`, geographical coordinates (`lat`, `lng`), and a `name`.
@@ -39,13 +39,13 @@ GeoTour showcases a variety of algorithms, each with detailed explanations of th
     - `g(n)`: The actual distance from the start node to the current node `n`.
     - `h(n)`: A heuristic estimate of the distance from `n` to the end node. In this project, the **haversine distance** (straight-line geographic distance) is used as the heuristic. This heuristic is **admissible** (it never overestimates the true distance), which guarantees that A* will find the optimal path.
 
-### Dijkstra's Algorithm
-- **Description:** Dijkstra's algorithm is a foundational shortest path algorithm that works on graphs with non-negative edge weights.
+### Dijkstra\'s Algorithm
+- **Description:** Dijkstra\'s algorithm is a foundational shortest path algorithm that works on graphs with non-negative edge weights.
 - **Logic:** It is similar to A* but does not use a heuristic to guide its search (`h(n) = 0`). It explores radially from the start node, always expanding the node with the lowest `g(n)` (cumulative distance). It guarantees the shortest path but can be less efficient than A* in large, open maps because it explores in all directions.
 
 ### Breadth-First Search (BFS)
 - **Description:** BFS explores a graph layer by layer, guaranteeing that it finds the path with the fewest number of edges.
-- **Logic:** It uses a standard queue (First-In, First-Out). Since it doesn't consider edge weights (distance), the path it finds is only optimal in terms of the number of segments, not the total travel distance. It is best used for unweighted graphs.
+- **Logic:** It uses a standard queue (First-In, First-Out). Since it doesn\'t consider edge weights (distance), the path it finds is only optimal in terms of the number of segments, not the total travel distance. It is best used for unweighted graphs.
 
 ### Depth-First Search (DFS)
 - **Description:** DFS explores a graph by traversing as far as possible down each branch before backtracking.
