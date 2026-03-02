@@ -55,6 +55,7 @@ export default function App() {
   const [isLinking, setIsLinking] = useState(false);
   
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
+  const [effectiveAlgorithm, setEffectiveAlgorithm] = useState<'A*' | 'Dijkstra' | 'BFS' | 'DFS' | 'Ordered (A*)' | 'TSP' | null>(null);
   const [focusedLocation, setFocusedLocation] = useState<[number, number] | null>(null);
 
   // Search state
@@ -235,7 +236,7 @@ export default function App() {
     const edgesToFetch = heuristicEdges.filter(he => !existingEdgeIds.has(he.id));
     
     const newEdges: Edge[] = [];
-    const concurrency = 10; // Process 10 routes concurrently to minimize time without overwhelming the browser
+    const concurrency = 50; // Process 50 routes concurrently to minimize time without overwhelming the browser
     
     for (let i = 0; i < edgesToFetch.length; i += concurrency) {
       const batch = edgesToFetch.slice(i, i + concurrency);
@@ -268,44 +269,74 @@ export default function App() {
     
     const graph = { nodes, edges };
     let result: SearchResult | null = null;
+    let usedAlgorithm: 'A*' | 'Dijkstra' | 'BFS' | 'DFS' | 'Ordered (A*)' | 'TSP' = algorithm;
 
-    switch(algorithm) {
-        case 'A*':
-            result = astar(graph, startNodeId, endNodeId);
-            break;
-        case 'Dijkstra':
-            result = dijkstra(graph, startNodeId, endNodeId);
-            break;
-        case 'BFS':
-            result = bfs(graph, startNodeId, endNodeId);
-            break;
-        case 'DFS':
-            result = dfs(graph, startNodeId, endNodeId);
-            break;
-        case 'Ordered (A*)':
-            const otherNodeIds = nodes.map(n => n.id).filter(id => id !== startNodeId && id !== endNodeId);
-            const waypoints = [startNodeId, ...otherNodeIds, endNodeId];
-            result = findOrderedWaypointPath(graph, waypoints);
-            if (result && result.path.length === 0) {
-              alert("Could not find a valid path connecting all waypoints in the specified order.");
-            }
-            break;
-        case 'TSP':
-            result = solveTSP(graph, startNodeId, endNodeId);
-            break;
-        default:
-            result = astar(graph, startNodeId, endNodeId);
-    }
+    if (nodes.length > 2) {
+      const otherNodeIds = nodes.map(n => n.id).filter(id => id !== startNodeId && id !== endNodeId);
+      const waypoints = [startNodeId, ...otherNodeIds, endNodeId];
+      const orderedResult = findOrderedWaypointPath(graph, waypoints);
+      const tspResult = solveTSP(graph, startNodeId, endNodeId);
 
-    if (result && result.path.length === 0 && algorithm !== 'Ordered (A*)') {
-      alert("No path found between the selected start and end nodes.");
+      let bestResult: SearchResult | null = null;
+      
+      if (orderedResult && orderedResult.path.length > 0) {
+        bestResult = orderedResult;
+        usedAlgorithm = 'Ordered (A*)';
+      }
+
+      if (tspResult && tspResult.path.length > 0) {
+        if (bestResult === null || tspResult.distance < bestResult.distance) {
+          bestResult = tspResult;
+          usedAlgorithm = 'TSP';
+        }
+      }
+      
+      result = bestResult;
+
+      if (!result || result.path.length === 0) {
+        alert("Could not find a valid path connecting all waypoints.");
+      }
+    } else {
+        switch(algorithm) {
+            case 'A*':
+                result = astar(graph, startNodeId, endNodeId);
+                break;
+            case 'Dijkstra':
+                result = dijkstra(graph, startNodeId, endNodeId);
+                break;
+            case 'BFS':
+                result = bfs(graph, startNodeId, endNodeId);
+                break;
+            case 'DFS':
+                result = dfs(graph, startNodeId, endNodeId);
+                break;
+            case 'Ordered (A*)':
+                const otherNodeIds = nodes.map(n => n.id).filter(id => id !== startNodeId && id !== endNodeId);
+                const waypoints = [startNodeId, ...otherNodeIds, endNodeId];
+                result = findOrderedWaypointPath(graph, waypoints);
+                if (result && result.path.length === 0) {
+                  alert("Could not find a valid path connecting all waypoints in the specified order.");
+                }
+                break;
+            case 'TSP':
+                result = solveTSP(graph, startNodeId, endNodeId);
+                break;
+            default:
+                result = astar(graph, startNodeId, endNodeId);
+        }
+
+        if (result && result.path.length === 0 && algorithm !== 'Ordered (A*)') {
+          alert("No path found between the selected start and end nodes.");
+        }
     }
 
     setSearchResult(result);
+    setEffectiveAlgorithm(usedAlgorithm);
   };
 
   const handleReset = () => {
     setSearchResult(null);
+    setEffectiveAlgorithm(null);
   };
 
   const handleClearAll = () => {
@@ -315,6 +346,7 @@ export default function App() {
     setEndNodeId(null);
     setSelectedNodes([]);
     setSearchResult(null);
+    setEffectiveAlgorithm(null);
   };
 
   const handleRemoveNode = (nodeId: string) => {
@@ -341,6 +373,7 @@ export default function App() {
     if (endNodeId === nodeId) setEndNodeId(null);
     setSelectedNodes(remainingSelected);
     setSearchResult(null);
+    setEffectiveAlgorithm(null);
   };
 
   return (
@@ -467,6 +500,11 @@ export default function App() {
                 <span className="text-xl font-bold font-mono text-white">{Math.round(searchResult.distance)} km</span>
               </div>
               <div className="space-y-1">
+                {effectiveAlgorithm && (
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Algorithm: <span className="text-white font-medium">{ALGORITHM_DISPLAY_NAMES[effectiveAlgorithm]}</span>
+                  </p>
+                )}
                 <p className="text-xs text-gray-400 leading-relaxed">
                   Visited <span className="text-white font-medium">{searchResult.path.length}</span> locations.
                 </p>
