@@ -29,13 +29,6 @@ async function fetchRoadRoute(lat1: number, lng1: number, lat2: number, lng2: nu
   };
 }
 
-interface SearchSuggestion {
-  place_id: string; // Photon uses osm_id, we can convert it to string
-  display_name: string;
-  lat: string;
-  lon: string;
-}
-
 const ALGORITHM_DISPLAY_NAMES: Record<'A*' | 'Dijkstra' | 'BFS' | 'DFS' | 'Ordered (A*)' | 'TSP', string> = {
   'A*': 'A* Search (Recommended)',
   'Dijkstra': "Dijkstra's",
@@ -58,18 +51,10 @@ export default function App() {
   const [effectiveAlgorithm, setEffectiveAlgorithm] = useState<'A*' | 'Dijkstra' | 'BFS' | 'DFS' | 'Ordered (A*)' | 'TSP' | null>(null);
   const [focusedLocation, setFocusedLocation] = useState<[number, number] | null>(null);
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   // Dropdown state
   const [isAlgorithmDropdownOpen, setIsAlgorithmDropdownOpen] = useState(false);
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
   const [isRoutePathExpanded, setIsRoutePathExpanded] = useState(false);
-  const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
   const algorithmDropdownRef = useRef<HTMLDivElement>(null);
   
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
@@ -101,72 +86,6 @@ export default function App() {
       }
     }
   }, [nodes.length, algorithm]);
-
-  const fetchSuggestions = async (query: string) => {
-    if (!query.trim()) {
-      setSuggestions([]);
-      return;
-    }
-    setIsSearching(true);
-    try {
-      let url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`;
-      if (userLocation) {
-        url += `&lat=${userLocation.lat}&lon=${userLocation.lon}`;
-      }
-      const res = await fetch(url);
-      const data = await res.json();
-      
-      const formattedSuggestions: SearchSuggestion[] = data.features.map((f: any) => {
-        const props = f.properties;
-        const nameParts = [props.name, props.city, props.state, props.country].filter(Boolean);
-        const displayName = Array.from(new Set(nameParts)).join(', ');
-        
-        return {
-          place_id: `${props.osm_type}${props.osm_id}`,
-          display_name: displayName || 'Unknown Location',
-          lat: f.geometry.coordinates[1].toString(),
-          lon: f.geometry.coordinates[0].toString()
-        };
-      });
-      
-      setSuggestions(formattedSuggestions);
-    } catch (e) {
-      console.error("Failed to fetch suggestions", e);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    if (searchQuery) {
-      searchTimeoutRef.current = setTimeout(() => {
-        fetchSuggestions(searchQuery);
-      }, 500);
-    } else {
-      setSuggestions([]);
-    }
-    return () => {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    };
-  }, [searchQuery, userLocation]); // Re-fetch suggestions when user location becomes available
-
-  const handleAddCityFromSearch = (suggestion: SearchSuggestion) => {
-    const lat = parseFloat(suggestion.lat);
-    const lng = parseFloat(suggestion.lon);
-    const newNode: Node = {
-      id: `node-${Date.now()}`,
-      lat,
-      lng,
-      name: suggestion.display_name.split(',')[0] // Use just the first part of the name
-    };
-    setNodes(prev => [...prev, newNode]);
-    setFocusedLocation([lat, lng]);
-    setSearchQuery('');
-    setShowSuggestions(false);
-  };
 
   const handleMapClick = useCallback(async (lat: number, lng: number) => {
     // Temporary name while fetching
@@ -391,46 +310,9 @@ export default function App() {
             </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              placeholder="Search location, building, area..." 
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
-            {isSearching && (
-              <Activity className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 animate-spin" size={14} />
-            )}
-            
-            {/* Suggestions Dropdown */}
-            {showSuggestions && searchQuery.trim() !== '' && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl overflow-hidden z-50" onClick={() => setExpandedSuggestion(null)}>
-                {suggestions.length > 0 ? suggestions.map((suggestion) => (
-                  <button
-                    key={suggestion.place_id}
-                    onClick={() => handleAddCityFromSearch(suggestion)}
-                    className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 flex items-start gap-3"
-                  >
-                    <MapPin size={16} className="text-emerald-500 mt-0.5 shrink-0" />
-                    <span className={cn("text-sm text-gray-300 text-left w-full", expandedSuggestion !== suggestion.place_id && 'line-clamp-2')} onClick={(e) => { e.stopPropagation(); setExpandedSuggestion(expandedSuggestion === suggestion.place_id ? null : suggestion.place_id)}}>{suggestion.display_name}</span>
-                  </button>
-                )) : !isSearching && (
-                  <div className="px-4 py-3 text-sm text-gray-400 text-center">
-                    No results found. It might be misspelled or an unpopular place.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2" onClick={() => setShowSuggestions(false)}>
+        <div className="flex-1 overflow-y-auto p-4 space-y-2" onClick={() => {}}>
           {nodes.map(node => (
             <div key={node.id} className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between group hover:bg-white/10 transition-colors">
               <span className={cn("text-sm font-medium cursor-pointer", expandedNode === node.id ? "whitespace-normal" : "truncate max-w-[140px] md:max-w-[180px]")} onClick={() => setExpandedNode(expandedNode === node.id ? null : node.id)} title={node.name}>{node.name}</span>
@@ -467,7 +349,7 @@ export default function App() {
           )}
         </div>
 
-        <div className="p-4 border-t border-white/10 space-y-3" onClick={() => setShowSuggestions(false)}>
+        <div className="p-4 border-t border-white/10 space-y-3" onClick={() => {}}>
           <button 
             onClick={handleAutoLink}
             disabled={nodes.length < 2 || isLinking}
@@ -523,7 +405,7 @@ export default function App() {
       </div>
 
       {/* Main Map Area */}
-      <div className="flex-1 relative h-[55vh] md:h-full" onClick={() => {setShowSuggestions(false); setIsAlgorithmDropdownOpen(false);}}>
+      <div className="flex-1 relative h-[55vh] md:h-full" onClick={() => {setIsAlgorithmDropdownOpen(false);}}>
         <MapArea 
           nodes={nodes}
           edges={edges}
