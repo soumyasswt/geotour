@@ -2,6 +2,7 @@ import React, { useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-polylinedecorator';
 import { Node, Edge } from '../lib/graph';
 
 interface MapAreaProps {
@@ -130,6 +131,49 @@ const MemoizedNode = React.memo(({ node, isStart, isEnd, isSelected, isExplored,
   );
 });
 
+const OptimalPathLayer = ({ pathCoords, color, weight, opacity, dashArray, className }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (pathCoords.length < 2) return;
+
+    const polyline = L.polyline(pathCoords, { 
+      color, 
+      weight, 
+      opacity, 
+      dashArray, 
+      className 
+    });
+
+    const decorator = (L as any).polylineDecorator(polyline, {
+      patterns: [
+        {
+          offset: '5%', 
+          repeat: '80px', 
+          symbol: (L as any).Symbol.arrowHead({ 
+            pixelSize: 12, 
+            pathOptions: { 
+              fillOpacity: 1, 
+              weight: 0, 
+              color 
+            } 
+          })
+        }
+      ]
+    });
+
+    map.addLayer(polyline);
+    map.addLayer(decorator);
+
+    return () => {
+      map.removeLayer(polyline);
+      map.removeLayer(decorator);
+    };
+  }, [pathCoords, color, weight, opacity, dashArray, className, map]);
+
+  return null;
+};
+
 export function MapArea({ nodes, edges, startNodeId, endNodeId, optimalPath, exploredEdges, onMapClick, onNodeClick, selectedNodes, focusedLocation }: MapAreaProps) {
   
   // Create a map of nodes for easy lookup
@@ -218,8 +262,8 @@ export function MapArea({ nodes, edges, startNodeId, endNodeId, optimalPath, exp
 
       {/* Draw optimal path (Glowing Green) */}
       {optimalPathCoords.length > 1 && (
-        <Polyline
-          positions={optimalPathCoords}
+        <OptimalPathLayer
+          pathCoords={optimalPathCoords}
           color="#10b981" // Emerald green
           weight={4}
           opacity={1}
