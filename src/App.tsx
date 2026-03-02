@@ -66,6 +66,9 @@ export default function App() {
 
   // Dropdown state
   const [isAlgorithmDropdownOpen, setIsAlgorithmDropdownOpen] = useState(false);
+  const [expandedNode, setExpandedNode] = useState<string | null>(null);
+  const [isRoutePathExpanded, setIsRoutePathExpanded] = useState(false);
+  const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
   const algorithmDropdownRef = useRef<HTMLDivElement>(null);
   
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
@@ -374,7 +377,7 @@ export default function App() {
             
             {/* Suggestions Dropdown */}
             {showSuggestions && searchQuery.trim() !== '' && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl overflow-hidden z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl overflow-hidden z-50" onClick={() => setExpandedSuggestion(null)}>
                 {suggestions.length > 0 ? suggestions.map((suggestion) => (
                   <button
                     key={suggestion.place_id}
@@ -382,7 +385,7 @@ export default function App() {
                     className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 flex items-start gap-3"
                   >
                     <MapPin size={16} className="text-emerald-500 mt-0.5 shrink-0" />
-                    <span className="text-sm text-gray-300 line-clamp-2">{suggestion.display_name}</span>
+                    <span className={cn("text-sm text-gray-300 text-left w-full", expandedSuggestion !== suggestion.place_id && 'line-clamp-2')} onClick={(e) => { e.stopPropagation(); setExpandedSuggestion(expandedSuggestion === suggestion.place_id ? null : suggestion.place_id)}}>{suggestion.display_name}</span>
                   </button>
                 )) : !isSearching && (
                   <div className="px-4 py-3 text-sm text-gray-400 text-center">
@@ -397,7 +400,7 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-4 space-y-2" onClick={() => setShowSuggestions(false)}>
           {nodes.map(node => (
             <div key={node.id} className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between group hover:bg-white/10 transition-colors">
-              <span className="text-sm font-medium truncate max-w-[140px] md:max-w-[180px]">{node.name}</span>
+              <span className={cn("text-sm font-medium cursor-pointer", expandedNode === node.id ? "whitespace-normal" : "truncate max-w-[140px] md:max-w-[180px]")} onClick={() => setExpandedNode(expandedNode === node.id ? null : node.id)} title={node.name}>{node.name}</span>
               <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <button 
                   onClick={() => setStartNodeId(node.id)}
@@ -471,7 +474,7 @@ export default function App() {
                   Explored <span className="text-white font-medium">{searchResult.exp}</span> nodes during search.
                 </p>
                 {searchResult.path.length > 0 && (
-                  <p className="text-[10px] text-emerald-500/80 mt-2 truncate">
+                  <p className={cn("text-[10px] text-emerald-500/80 mt-2 cursor-pointer", !isRoutePathExpanded && "truncate")} onClick={() => setIsRoutePathExpanded(!isRoutePathExpanded)} title="Click to expand/collapse">
                     {searchResult.path.map(id => nodes.find(n => n.id === id)?.name).join(' → ')}
                   </p>
                 )}
