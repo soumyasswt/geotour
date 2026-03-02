@@ -376,15 +376,15 @@ export default function App() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-[#0a0a0a] text-white font-sans overflow-hidden">
-      <div className="w-full md:w-80 bg-[#121212] border-b md:border-b-0 md:border-r border-white/10 flex flex-col z-10 shadow-2xl h-[45vh] md:h-full shrink-0">
-        <div className="p-4 md:p-6 border-b border-white/10">
-          <div className="flex items-center gap-3 mb-4 md:mb-6">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-500">
-              <Activity size={20} className="md:w-6 md:h-6" />
+      <div className="w-full md:w-80 bg-[#121212] border-b md:border-b-0 md:border-r border-white/10 flex flex-col z-10 shadow-2xl h-[40vh] md:h-full shrink-0">
+        <div className="p-3 md:p-6 border-b border-white/10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0">
+              <Activity size={18} />
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-bold tracking-tight">GeoTour</h1>
-              <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-mono">Vector Path</p>
+              <h1 className="text-base md:text-xl font-bold tracking-tight">GeoTour</h1>
+              <p className="text-[9px] text-gray-400 uppercase tracking-widest font-mono">Vector Path</p>
             </div>
           </div>
 
@@ -398,7 +398,7 @@ export default function App() {
                 setShowSuggestions(true);
               }}
               onFocus={() => setShowSuggestions(true)}
-              placeholder="Search location, building, area..." 
+              placeholder="Search for a location..." 
               className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
             />
             {isSearching && (
@@ -426,11 +426,11 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2" onClick={() => setShowSuggestions(false)}>
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2" onClick={() => setShowSuggestions(false)}>
           {nodes.map(node => (
-            <div key={node.id} className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between group hover:bg-white/10 transition-colors">
-              <span className={cn("text-sm font-medium cursor-pointer", expandedNode === node.id ? "whitespace-normal" : "truncate max-w-[140px] md:max-w-[180px]")} onClick={() => setExpandedNode(expandedNode === node.id ? null : node.id)} title={node.name}>{node.name}</span>
-              <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            <div key={node.id} className="bg-white/5 border border-white/10 rounded-lg p-2 md:p-3 flex items-center justify-between group hover:bg-white/10 transition-colors">
+              <span className={cn("text-sm font-medium cursor-pointer", expandedNode === node.id ? "whitespace-normal" : "truncate max-w-[120px] sm:max-w-[140px] md:max-w-[180px]")} onClick={() => setExpandedNode(expandedNode === node.id ? null : node.id)} title={node.name}>{node.name}</span>
+              <div className="flex gap-1">
                 <button 
                   onClick={() => setStartNodeId(node.id)}
                   className={cn("px-2 py-1 text-xs rounded", startNodeId === node.id ? "bg-emerald-500/20 text-emerald-500" : "bg-white/10 hover:bg-white/20")}
@@ -457,30 +457,30 @@ export default function App() {
             </div>
           ))}
           {nodes.length === 0 && (
-            <div className="text-center text-gray-500 text-sm py-8">
+            <div className="text-center text-gray-500 text-xs md:text-sm py-6 md:py-8">
               Click on the map or search to add locations
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-white/10 space-y-3" onClick={() => setShowSuggestions(false)}>
+        <div className="p-3 md:p-4 border-t border-white/10 space-y-2 md:space-y-3" onClick={() => setShowSuggestions(false)}>
           <button 
             onClick={handleAutoLink}
             disabled={nodes.length < 2 || isLinking}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-lg py-2.5 text-sm font-medium border border-indigo-500/30"
+            className="w-full flex items-center justify-center gap-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-lg py-2 text-sm font-medium border border-indigo-500/30"
           >
-            {isLinking ? <Activity className="animate-spin" size={16} /> : <LinkIcon size={16} />} Auto-Link Network
+            {isLinking ? <Activity className="animate-spin" size={16} /> : <LinkIcon size={16} />} Auto-Link
           </button>
 
           <button 
             onClick={handleOptimize}
             disabled={!startNodeId || !endNodeId || nodes.length < 2 || isLinking}
-            className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-lg py-3 text-sm font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-lg py-2.5 md:py-3 text-sm font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)]"
           >
             <Zap size={18} /> Optimize Tour
           </button>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2">
             <button onClick={handleReset} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 transition-colors rounded-lg py-2 text-xs font-medium border border-white/10 text-gray-400">
               <RotateCcw size={14} /> Reset
             </button>
@@ -490,7 +490,7 @@ export default function App() {
           </div>
 
           {searchResult && (
-            <div className="mt-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+            <div className="hidden md:block mt-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
               <div className="flex justify-between items-end mb-2">
                 <span className="text-[10px] text-emerald-500 uppercase tracking-widest font-bold">Route Found</span>
                 <span className="text-xl font-bold font-mono text-white">{searchResult.distance > 0 ? `${Math.round(searchResult.distance)} km` : '-'}</span>
@@ -518,7 +518,7 @@ export default function App() {
         </div>
       </div>
 
-      <div className="flex-1 relative h-[55vh] md:h-full" onClick={() => {setShowSuggestions(false); setIsAlgorithmDropdownOpen(false);}}>
+      <div className="flex-1 relative h-[60vh] md:h-full" onClick={() => {setShowSuggestions(false); setIsAlgorithmDropdownOpen(false);}}>
         <MapArea 
           nodes={nodes}
           edges={edges}
@@ -532,9 +532,9 @@ export default function App() {
           focusedLocation={focusedLocation}
         />
 
-        <div className="absolute top-4 right-4 md:top-6 md:right-6 z-[400] flex flex-col items-end gap-2 md:gap-4 pointer-events-none">
+        <div className="absolute top-2 right-2 md:top-6 md:right-6 z-[400] flex flex-col items-end gap-2 md:gap-4 pointer-events-none">
           
-          <div className="bg-[#121212]/90 backdrop-blur-md border border-white/10 rounded-full py-1.5 px-3 md:py-2 md:px-4 flex items-center gap-2 md:gap-4 shadow-2xl pointer-events-auto">
+          <div className="hidden md:flex bg-[#121212]/90 backdrop-blur-md border border-white/10 rounded-full py-1.5 px-3 md:py-2 md:px-4 items-center gap-2 md:gap-4 shadow-2xl pointer-events-auto">
             <div className="flex items-center gap-1.5 md:gap-2">
               <div className="w-3.5 h-3.5 md:w-4 md:h-4 rounded-full bg-white/10 flex items-center justify-center text-[8px] md:text-[9px] font-mono text-gray-400 shrink-0">1</div>
               <span className="text-[9px] md:text-[10px] text-gray-300 whitespace-nowrap">Add</span>
@@ -551,16 +551,16 @@ export default function App() {
             </div>
           </div>
 
-          <div className="bg-[#121212]/90 backdrop-blur-md border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-2xl w-auto md:min-w-[240px] pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/10 gap-4">
+          <div className="bg-[#121212]/90 backdrop-blur-md border border-white/10 rounded-xl p-2 md:p-4 shadow-2xl w-auto pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center pb-2 mb-2 md:pb-3 md:mb-3 border-b border-white/10 gap-2 md:gap-4">
               <span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-mono">Algorithm</span>
-              <div className="relative w-48" ref={algorithmDropdownRef}>
+              <div className="relative w-36 md:w-48" ref={algorithmDropdownRef}>
                 <button
                   onClick={() => setIsAlgorithmDropdownOpen(!isAlgorithmDropdownOpen)}
-                  className="w-full flex justify-between items-center bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-xs md:text-sm text-emerald-500 font-bold focus:outline-none focus:border-emerald-500/50 transition-colors hover:bg-white/10"
+                  className="w-full flex justify-between items-center bg-white/5 border border-white/10 rounded-md px-2 py-1 md:px-3 md:py-1.5 text-xs text-emerald-500 font-bold focus:outline-none focus:border-emerald-500/50 transition-colors hover:bg-white/10"
                 >
                   <span className="truncate">{ALGORITHM_DISPLAY_NAMES[algorithm]}</span>
-                  <ChevronDown size={16} className={cn("text-gray-400 transition-transform shrink-0 ml-2", isAlgorithmDropdownOpen && 'rotate-180')} />
+                  <ChevronDown size={14} className={cn("text-gray-400 transition-transform shrink-0 ml-1 md:ml-2", isAlgorithmDropdownOpen && 'rotate-180')} />
                 </button>
                 {isAlgorithmDropdownOpen && (
                   <div className="absolute top-full right-0 mt-1 w-full bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95">
@@ -579,19 +579,19 @@ export default function App() {
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1 md:space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-mono">Exp</span>
-                <span className="text-sm md:text-base font-mono font-medium text-emerald-500">{searchResult?.exp || '-'}</span>
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-mono">Nodes</span>
+                <span className="text-xs md:text-base font-mono font-medium text-emerald-500">{searchResult?.exp || '-'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-mono">Dist</span>
-                <span className="text-sm md:text-base font-mono font-medium text-white">{searchResult && searchResult.distance > 0 ? `${Math.round(searchResult.distance)} km` : '-'}</span>
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-mono">Distance</span>
+                <span className="text-xs md:text-base font-mono font-medium text-white">{searchResult && searchResult.distance > 0 ? `${Math.round(searchResult.distance)} km` : '-'}</span>
               </div>
             </div>
 
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <div className="text-[8px] md:text-[9px] text-gray-400 uppercase tracking-widest font-mono mb-1.5">Map Legend</div>
+            <div className="hidden md:block mt-3 pt-3 border-t border-white/10">
+              <div className="text-[9px] text-gray-400 uppercase tracking-widest font-mono mb-1.5">Map Legend</div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-1 bg-[#1e3a8a] rounded-full"></div>
