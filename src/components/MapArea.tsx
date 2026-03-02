@@ -4,9 +4,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-polylinedecorator';
 import { Node, Edge } from '../lib/graph';
-import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
-import 'leaflet-geosearch/dist/geosearch.css';
-
 
 interface MapAreaProps {
   nodes: Node[];
@@ -20,40 +17,6 @@ interface MapAreaProps {
   selectedNodes: string[];
   focusedLocation?: [number, number] | null;
 }
-
-// New component for the search control
-const SearchControl = ({ onSearchResult }: { onSearchResult: (lat: number, lng: number) => void }) => {
-    const map = useMap();
-  
-    useEffect(() => {
-      const provider = new OpenStreetMapProvider();
-  
-      const searchControl = new (GeoSearchControl as any)({
-        provider: provider,
-        style: 'bar',
-        showMarker: false,
-        showPopup: false,
-        autoClose: true,
-        retainZoomLevel: false,
-        animateZoom: true,
-        keepResult: true,
-      });
-  
-      const onShowLocation = (e: any) => {
-        onSearchResult(e.location.y, e.location.x);
-      };
-  
-      map.addControl(searchControl);
-      map.on('geosearch/showlocation', onShowLocation);
-  
-      return () => {
-        map.removeControl(searchControl);
-        map.off('geosearch/showlocation', onShowLocation);
-      };
-    }, [map, onSearchResult]);
-  
-    return null;
-  };
 
 function MapController({ focusedLocation }: { focusedLocation?: [number, number] | null }) {
   const map = useMap();
@@ -277,8 +240,6 @@ export function MapArea({ nodes, edges, startNodeId, endNodeId, optimalPath, exp
       
       <MapController focusedLocation={focusedLocation} />
       <MapEvents onMapClick={onMapClick} />
-      <SearchControl onSearchResult={onMapClick} />
-
 
       {/* Draw all edges (Network) */}
       {edges.map(edge => {
