@@ -67,7 +67,6 @@ export default function App() {
   const [isAlgorithmDropdownOpen, setIsAlgorithmDropdownOpen] = useState(false);
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
   const [isRoutePathExpanded, setIsRoutePathExpanded] = useState(false);
-  const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
   const algorithmDropdownRef = useRef<HTMLDivElement>(null);
   
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
@@ -407,7 +406,7 @@ export default function App() {
             )}
             
             {showSuggestions && searchQuery.trim() !== '' && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl overflow-hidden z-50" onClick={() => setExpandedSuggestion(null)}>
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl overflow-hidden z-50">
                 {suggestions.length > 0 ? suggestions.map((suggestion) => (
                   <button
                     key={suggestion.place_id}
@@ -415,7 +414,7 @@ export default function App() {
                     className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 flex items-start gap-3"
                   >
                     <MapPin size={16} className="text-emerald-500 mt-0.5 shrink-0" />
-                    <span className={cn("text-sm text-gray-300 text-left w-full", expandedSuggestion !== suggestion.place_id && 'line-clamp-2')} onClick={(e) => { e.stopPropagation(); setExpandedSuggestion(expandedSuggestion === suggestion.place_id ? null : suggestion.place_id)}}>{suggestion.display_name}</span>
+                    <span className="text-sm text-gray-300 text-left w-full line-clamp-2">{suggestion.display_name}</span>
                   </button>
                 )) : !isSearching && (
                   <div className="px-4 py-3 text-sm text-gray-400 text-center">
