@@ -414,6 +414,52 @@ export function dfs(graph: Graph, startId: string, endId: string): SearchResult 
     exp
   };
 }
+
+export function findOrderedWaypointPath(graph: Graph, waypoints: string[]): SearchResult {
+  if (waypoints.length < 2) {
+    return { path: [], exploredEdges: [], distance: 0, exp: 0 };
+  }
+
+  const totalPath: string[] = [];
+  const totalExploredEdges: string[] = [];
+  let totalDistance = 0;
+  let totalExp = 0;
+
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const startId = waypoints[i];
+    const endId = waypoints[i+1];
+
+    // Using astar as it's generally best for this kind of search
+    const segmentResult = astar(graph, startId, endId);
+
+    // If a segment is impossible, the whole route is impossible
+    if (segmentResult.path.length === 0) {
+      console.error(`Could not find path from ${startId} to ${endId}`);
+      return { path: [], exploredEdges: [], distance: 0, exp: 0 };
+    }
+    
+    totalDistance += segmentResult.distance;
+    totalExp += segmentResult.exp;
+    totalExploredEdges.push(...segmentResult.exploredEdges);
+
+    if (totalPath.length === 0) {
+      // First segment
+      totalPath.push(...segmentResult.path);
+    } else {
+      // Subsequent segments - skip the first node to avoid duplication
+      totalPath.push(...segmentResult.path.slice(1));
+    }
+  }
+
+  return {
+    path: totalPath,
+    // A Set could be used here to remove duplicate explored edges, but for now a simple concatenation is fine.
+    exploredEdges: Array.from(new Set(totalExploredEdges)), 
+    distance: totalDistance,
+    exp: totalExp,
+  };
+}
+
 export function dijkstraAll(graph: Graph, startId: string, adj: Map<string, { neighbor: string; edge: Edge }[]>): Map<string, SearchResult> {
   const distances = new Map<string, number>();
   const previous = new Map<string, string>();

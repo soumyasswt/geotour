@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Share2, Info, Search, Link as LinkIcon, Zap, RotateCcw, Trash2, Activity, MapPin } from 'lucide-react';
+import { Share2, Info, Search, Link as LinkIcon, Zap, RotateCcw, Trash2, Activity, MapPin, ChevronDown } from 'lucide-react';
 import { MapArea } from './components/MapArea';
-import { Node, Edge, autoLinkNetwork, solveTSP, dijkstra, astar, bfs, dfs, SearchResult, haversineDistance } from './lib/graph';
+import { Node, Edge, autoLinkNetwork, solveTSP, findOrderedWaypointPath, dijkstra, astar, bfs, dfs, SearchResult, haversineDistance } from './lib/graph';
 import { cn } from './lib/utils';
 
 async function fetchRoadRoute(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -36,13 +36,22 @@ interface SearchSuggestion {
   lon: string;
 }
 
+const ALGORITHM_DISPLAY_NAMES: Record<'A*' | 'Dijkstra' | 'BFS' | 'DFS' | 'Ordered (A*)' | 'TSP', string> = {
+  'A*': 'A* Search (Recommended)',
+  'Dijkstra': "Dijkstra's",
+  'BFS': 'Breadth-First Search',
+  'DFS': 'Depth-First Search',
+  'Ordered (A*)': 'Visit in Order',
+  'TSP': 'Optimize Order (TSP)',
+};
+
 export default function App() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [startNodeId, setStartNodeId] = useState<string | null>(null);
   const [endNodeId, setEndNodeId] = useState<string | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [algorithm, setAlgorithm] = useState<'Dijkstra (TSP)' | 'Dijkstra' | 'A*' | 'BFS' | 'DFS'>('Dijkstra (TSP)');
+  const [algorithm, setAlgorithm] = useState<'A*' | 'Dijkstra' | 'BFS' | 'DFS' | 'Ordered (A*)' | 'TSP'>('A*');
   const [isLinking, setIsLinking] = useState(false);
   
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
@@ -54,24 +63,24 @@ export default function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Dropdown state
+  const [isAlgorithmDropdownOpen, setIsAlgorithmDropdownOpen] = useState(false);
+  const algorithmDropdownRef = useRef<HTMLDivElement>(null);
   
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
 
   useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.warn("Could not get user location:", error.message || "Permission denied or unavailable");
-        }
-      );
+    if (nodes.length > 2) {
+      if (['A*', 'Dijkstra', 'BFS', 'DFS'].includes(algorithm)) {
+        setAlgorithm('Ordered (A*)');
+      }
+    } else {
+      if (['Ordered (A*)', 'TSP'].includes(algorithm)) {
+        setAlgorithm('A*');
+      }
     }
-  }, []);
+  }, [nodes.length, algorithm]);
 
   const fetchSuggestions = async (query: string) => {
     if (!query.trim()) {
@@ -233,37 +242,47 @@ export default function App() {
   };
 
   const handleOptimize = () => {
-    if (!startNodeId || nodes.length < 2) return;
-
-    const graph = { nodes, edges };
-
-    if (algorithm === 'Dijkstra (TSP)') {
-      if (!endNodeId) {
-        alert("Please select both a start and end node for TSP.");
-        return;
-      }
-      const result = solveTSP(graph, startNodeId, endNodeId);
-      setSearchResult(result);
-    } else if (endNodeId) {
-      let result: SearchResult | null = null;
-      switch (algorithm) {
-        case 'Dijkstra':
-          result = dijkstra(graph, startNodeId, endNodeId);
-          break;
-        case 'A*':
-          result = astar(graph, startNodeId, endNodeId);
-          break;
-        case 'BFS':
-          result = bfs(graph, startNodeId, endNodeId);
-          break;
-        case 'DFS':
-          result = dfs(graph, startNodeId, endNodeId);
-          break;
-      }
-      if (result) {
-        setSearchResult(result);
-      }
+    if (!startNodeId || !endNodeId) {
+      alert("Please select a start and end node first.");
+      return;
     }
+    
+    const graph = { nodes, edges };
+    let result: SearchResult | null = null;
+
+    switch(algorithm) {
+        case 'A*':
+            result = astar(graph, startNodeId, endNodeId);
+            break;
+        case 'Dijkstra':
+            result = dijkstra(graph, startNodeId, endNodeId);
+            break;
+        case 'BFS':
+            result = bfs(graph, startNodeId, endNodeId);
+            break;
+        case 'DFS':
+            result = dfs(graph, startNodeId, endNodeId);
+            break;
+        case 'Ordered (A*)':
+            const otherNodeIds = nodes.map(n => n.id).filter(id => id !== startNodeId && id !== endNodeId);
+            const waypoints = [startNodeId, ...otherNodeIds, endNodeId];
+            result = findOrderedWaypointPath(graph, waypoints);
+            if (result && result.path.length === 0) {
+              alert("Could not find a valid path connecting all waypoints in the specified order.");
+            }
+            break;
+        case 'TSP':
+            result = solveTSP(graph, startNodeId, endNodeId);
+            break;
+        default:
+            result = astar(graph, startNodeId, endNodeId);
+    }
+
+    if (result && result.path.length === 0 && algorithm !== 'Ordered (A*)') {
+      alert("No path found between the selected start and end nodes.");
+    }
+
+    setSearchResult(result);
   };
 
   const handleReset = () => {
@@ -407,7 +426,7 @@ export default function App() {
 
           <button 
             onClick={handleOptimize}
-            disabled={!startNodeId || nodes.length < 2 || (algorithm !== 'Dijkstra (TSP)' && !endNodeId) || isLinking}
+            disabled={!startNodeId || !endNodeId || nodes.length < 2 || isLinking}
             className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-lg py-3 text-sm font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)]"
           >
             <Zap size={18} /> Optimize Tour
@@ -447,7 +466,7 @@ export default function App() {
       </div>
 
       {/* Main Map Area */}
-      <div className="flex-1 relative h-[55vh] md:h-full" onClick={() => setShowSuggestions(false)}>
+      <div className="flex-1 relative h-[55vh] md:h-full" onClick={() => {setShowSuggestions(false); setIsAlgorithmDropdownOpen(false);}}>
         <MapArea 
           nodes={nodes}
           edges={edges}
@@ -483,20 +502,31 @@ export default function App() {
           </div>
 
           {/* Stats */}
-          <div className="bg-[#121212]/90 backdrop-blur-md border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-2xl w-auto md:min-w-[240px] pointer-events-auto">
+          <div className="bg-[#121212]/90 backdrop-blur-md border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-2xl w-auto md:min-w-[240px] pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/10 gap-4">
               <span className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-mono">Algorithm</span>
-              <select 
-                value={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value as any)}
-                className="bg-transparent text-emerald-500 font-bold text-xs md:text-sm focus:outline-none cursor-pointer text-right"
-              >
-                <option value="Dijkstra (TSP)">Dijkstra (TSP)</option>
-                <option value="Dijkstra">Dijkstra (A to B)</option>
-                <option value="A*">A* (A to B)</option>
-                <option value="BFS">BFS</option>
-                <option value="DFS">DFS</option>
-              </select>
+              <div className="relative w-48" ref={algorithmDropdownRef}>
+                <button
+                  onClick={() => setIsAlgorithmDropdownOpen(!isAlgorithmDropdownOpen)}
+                  className="w-full flex justify-between items-center bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-xs md:text-sm text-emerald-500 font-bold focus:outline-none focus:border-emerald-500/50 transition-colors hover:bg-white/10"
+                >
+                  <span className="truncate">{ALGORITHM_DISPLAY_NAMES[algorithm]}</span>
+                  <ChevronDown size={16} className={cn("text-gray-400 transition-transform shrink-0 ml-2", isAlgorithmDropdownOpen && 'rotate-180')} />
+                </button>
+                {isAlgorithmDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-1 w-full bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95">
+                    <div className="text-gray-400 px-3 py-2 text-xs font-bold border-b border-white/10">A to B Pathfinding</div>
+                    <button onClick={() => { setAlgorithm('A*'); setIsAlgorithmDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5 transition-colors">A* Search (Recommended)</button>
+                    <button onClick={() => { setAlgorithm('Dijkstra'); setIsAlgorithmDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5 transition-colors">Dijkstra's</button>
+                    <button onClick={() => { setAlgorithm('BFS'); setIsAlgorithmDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5 transition-colors">Breadth-First Search</button>
+                    <button onClick={() => { setAlgorithm('DFS'); setIsAlgorithmDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5 transition-colors">Depth-First Search</button>
+
+                    <div className="text-gray-400 px-3 py-2 text-xs font-bold border-t border-white/10">Multi-Point Tour</div>
+                    <button onClick={() => { setAlgorithm('Ordered (A*)'); setIsAlgorithmDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5 transition-colors">Visit in Order</button>
+                    <button onClick={() => { setAlgorithm('TSP'); setIsAlgorithmDropdownOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5 transition-colors">Optimize Order (TSP)</button>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -541,4 +571,3 @@ export default function App() {
     </div>
   );
 }
-
